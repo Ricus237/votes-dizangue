@@ -195,8 +195,8 @@ export default function VotePage() {
               height={200}
               className="mx-auto rounded-lg"            />
           </div>
-          <h1 className="text-4xl font-bold text-[#FFD700] mb-6">Votez pour l&apos avenir</h1>
-          <p className="text-xl text-white mb-8">Votre voix compte. Participez au changement dès aujourd&aposhui !</p>
+          <h1 className="text-4xl font-bold text-[#FFD700] mb-6">Votez pour votre favori</h1>
+          <p className="text-xl text-white mb-8">Votre voix compte. Participez au changement dès maintenant !</p>
           <Button
             onClick={scrollToFirstNominees}
             className="bg-[#FFD700] text-black hover:bg-[#FFC000] transition-all duration-300 text-lg px-8 py-3 rounded-full shadow-lg hover:shadow-xl"
@@ -293,7 +293,7 @@ export default function VotePage() {
           <DialogHeader>
             <DialogTitle className="text-[#FFD700]">Choisissez votre moyen de paiement</DialogTitle>
             <DialogDescription className="text-white">
-              Sélectionnez l&aposoption qui vous convient le mieux pour procéder au vote.
+              Sélectionnez le service qui vous convient le mieux pour procéder au vote.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 mt-4">
