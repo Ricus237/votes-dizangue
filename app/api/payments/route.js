@@ -37,7 +37,40 @@ export async function POST(req) {
         return new Response(JSON.stringify({ success: false, message: "Erreur lors de la récupération des données." }), { status: 500 });
       }
 
-      const newLikes = (data.likes || 0) + 1;
+      let likesToAdd = 0;
+
+      // Déterminer le nombre de likes à ajouter en fonction du montant
+      switch (amount) {
+        case 155:
+          likesToAdd = 1;
+          break;
+        case 310:
+          likesToAdd = 2;
+          break;
+        case 775:
+          likesToAdd = 5;
+          break;
+        case 1550:
+          likesToAdd = 10;
+          break;
+        case 3100:
+          likesToAdd = 20;
+          break;
+        case 4650:
+          likesToAdd = 30;
+          break;
+        case 7750:
+          likesToAdd = 50;
+          break;
+        case 15500:
+          likesToAdd = 100;
+          break;
+        default:
+          console.error('Montant non reconnu:', amount);
+          return new Response(JSON.stringify({ success: false, message: "Montant non valide." }), { status: 400 });
+      }
+
+      const newLikes = (data.likes || 0) + likesToAdd;
 
       // Mettre à jour la colonne 'likes' dans la table 'votes'
       const { error: updateError } = await supabase

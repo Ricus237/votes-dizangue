@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 function PaymentForm() {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
@@ -16,7 +16,6 @@ function PaymentForm() {
   const [nominee, setNominee] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [step, setStep] = useState<'phone' | 'likes'>('phone');
-  const [selectedLikes, setSelectedLikes] = useState<number | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -53,9 +52,10 @@ function PaymentForm() {
     setStep('likes');
   };
 
-  const handleLikeSelection = async (likes: number, amount: number) => {
-    setSelectedLikes(likes);
+  const handleLikeSelection = async (amount: number) => {
     setIsProcessing(true);
+    setError('');
+    setSuccess(false);
 
     const service = operator === 'orange' ? 'ORANGE' : 'MTN';
     const depositNumber = '699434038';
@@ -74,7 +74,7 @@ function PaymentForm() {
       if (response.ok && data.success) {
         setSuccess(true);
         // Redirect to the net page with the amount
-        router.push(`/net?amount=${amount}`);
+        router.push(`/`);
       } else {
         setError(data.message || "La transaction a échoué. Veuillez réessayer.");
       }
@@ -118,7 +118,7 @@ function PaymentForm() {
               {likeOptions.map((option) => (
                 <Button
                   key={option.value}
-                  onClick={() => handleLikeSelection(option.value, option.amount)}
+                  onClick={() => handleLikeSelection(option.amount)}
                   disabled={isProcessing}
                   className="h-20 flex flex-col items-center justify-center"
                 >
@@ -130,6 +130,12 @@ function PaymentForm() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col items-start">
+          {isProcessing && (
+            <div className="text-blue-500 flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Transaction en cours, veuillez patienter...
+            </div>
+          )}
           {error && <div className="text-red-500 flex items-center"><AlertCircle className="mr-2" />{error}</div>}
           {success && <div className="text-green-500 flex items-center"><CheckCircle2 className="mr-2" />Transaction réussie!</div>}
         </CardFooter>
