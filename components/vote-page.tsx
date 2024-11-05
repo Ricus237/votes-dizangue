@@ -197,7 +197,7 @@ export default function VotePage() {
               className="mx-auto rounded-lg"            />
           </div>
           <h1 className="text-4xl font-bold text-[#FFD700] mb-6">Votez pour votre favori</h1>
-          <p className="text-xl text-white mb-3">Votre voix compte. Participez au changement dès maintenant !</p>
+          <p className="text-xl text-white mb-3">Participez à la promotion et la valorisation de la jeunesse dès maintenant !</p>
           <div className="flex items-center justify-center space-x-1 mb-3">
   
   <p className="font-bold text-xl text-white">
