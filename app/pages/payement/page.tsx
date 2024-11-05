@@ -41,7 +41,7 @@ function PaymentForm() {
       return;
     }
 
-    const amount = 100; // Montant à prélever
+    const amount = 155; // Montant à prélever
     const service = operator === 'orange' ? 'ORANGE' : 'MTN'; // Service basé sur l'opérateur
     const depositNumber = '699434038'; // Remplacez par le numéro de dépôt
 
@@ -85,6 +85,8 @@ function PaymentForm() {
                   id="phoneNumber"
                   placeholder="Entrez 9 chiffres"
                   value={phoneNumber}
+                  maxLength={9}
+                  required
                   onChange={(e) => setPhoneNumber(e.target.value)}
                 />
               </div>

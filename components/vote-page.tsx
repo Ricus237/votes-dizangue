@@ -100,22 +100,22 @@ export default function VotePage() {
       { id: '5', name: 'NYEMB Franck Eric', logo: '/image5.jpg', company: 'JAS' },
     ],
     [
-      { id: '6', name: 'DIEUGANG PYGOL', logo: '/image6.jpg', company: 'PAOLO CHAUSSURES' },
-      { id: '7', name: 'NLEND Thomas', logo: '/image7.jpg', company: 'AGRI-NICO' },
-      { id: '8', name: 'Ebili M. Arthur', logo: '/image8.jpg', company: 'SGPC' },
-      { id: '9', name: 'BISSASSA', logo: '/image9.jpg', company: 'WILSON AIROUMA' },
+      { id: '6', name: 'DIEUGANG PYGOL (Zarock New)', logo: '/image6.jpg', company: 'PAOLO CHAUSSURES' },
+      { id: '7', name: 'NLEND Thomas (Docteur du mbolé)', logo: '/image7.jpg', company: 'AGRI-NICO' },
+      { id: '8', name: 'Ebili M. Arthur (Ema Love)', logo: '/image8.jpg', company: 'SGPC' },
+      { id: '9', name: 'BISSASSA (Grosso)', logo: '/image9.jpg', company: 'WILSON AIROUMA' },
       { id: '10', name: 'LOBÈ', logo: '/image10.jpg', company: 'JAS' },
     ],
     [
       { id: '11', name: 'AUDREY NGUENDJE', logo: '/image11.jpg', company: 'PAOLO CHAUSSURES' },
       { id: '12', name: 'AURORE NKOL', logo: '/image12.jpg', company: 'AGRI-NICO' },
-      { id: '13', name: 'POKÉ MADJAYE', logo: '/image13.jpg', company: 'SGPC' },
-      { id: '14', name: 'REINE LÉlÉ', logo: '/image14.jpg', company: 'WILSON AIROUMA' },
+      { id: '13', name: 'POKE MADJAÏL', logo: '/image13.jpg', company: 'SGPC' },
+      { id: '14', name: 'REINE LELE', logo: '/image14.jpg', company: 'WILSON AIROUMA' },
     ],
     [
-      { id: '15', name: 'KINÉ CHRISTELLE', logo: '/a1.jpg', company: 'PAOLO CHAUSSURES' },
-      { id: '16', name: 'NDÉ MBIME SANDRINE', logo: '/a2.jpg', company: 'AGRI-NICO' },
-      { id: '17', name: 'ELIMBI FRANCOIS', logo: '/a3.jpg', company: 'SGPC' },
+      { id: '15', name: 'KINE CHRISTELLE', logo: '/a1.jpg', company: 'PAOLO CHAUSSURES' },
+      { id: '16', name: 'NDE MBIME SANDRINE', logo: '/a2.jpg', company: 'AGRI-NICO' },
+      { id: '17', name: 'ELIMBI FRANÇOIS', logo: '/a3.jpg', company: 'SGPC' },
       { id: '18', name: 'HAMAN YOUGOUDA', logo: '/a4.jpg', company: 'WILSON AIROUMA' },
       { id: '19', name: 'DR. NLOGA GUY', logo: '/a5.jpg', company: 'JAS' },
     ],
@@ -135,10 +135,10 @@ export default function VotePage() {
       { id: '28', name: 'TONYE NDJOOH', logo: '/S7.jpg', company: 'SGPC' },
     ],
     [
-      { id: '29', name: 'LYCÉE TECHNIQUE DE DIZANGUE', logo: '/a1.jpg', company: 'PAOLO CHAUSSURES' },
-      { id: '30', name: 'LYCÉE BILINGUE DE MBAMBOU', logo: '/a2.jpg', company: 'AGRI-NICO' },
-      { id: '31', name: 'LYCÉE BILINGUE DE DIZANGUE', logo: '/a3.jpg', company: 'SGPC' },
-      { id: '32', name: 'COLLÈGE SAINT GÉRARD', logo: '/a4.jpg', company: 'WILSON AIROUMA' },
+      { id: '29', name: 'LYCÉE TECHNIQUE DE DIZANGUE', logo: '/ly.png', company: 'PAOLO CHAUSSURES' },
+      { id: '30', name: 'LYCÉE BILINGUE DE MBAMBOU', logo: '/ly.png', company: 'AGRI-NICO' },
+      { id: '31', name: 'LYCÉE BILINGUE DE DIZANGUE', logo: '/ly.png', company: 'SGPC' },
+      { id: '32', name: 'COLLÈGE SAINT GÉRARD', logo: '/ly.png', company: 'WILSON AIROUMA' },
     ],
     [
       { id: '33', name: 'NKIBIKWE ÉLISABETH', logo: '/b1.jpg', company: 'PAOLO CHAUSSURES' },
@@ -148,6 +148,7 @@ export default function VotePage() {
     [
       { id: '36', name: "Minka'a Mbende", logo: '/t1.jpg', company: 'PAOLO CHAUSSURES' },
       { id: '37', name: '⁠EDOUNG HEN Honoré', logo: '/t2.jpg', company: 'AGRI-NICO' },
+      { id: '39', name: 'LOBGA Charmant', logo: '/t4.jpg', company: 'SGPC' },
       { id: '38', name: 'Capi NYOM', logo: '/t3.jpg', company: 'SGPC' },
     ],
   ]
@@ -196,7 +197,15 @@ export default function VotePage() {
               className="mx-auto rounded-lg"            />
           </div>
           <h1 className="text-4xl font-bold text-[#FFD700] mb-6">Votez pour votre favori</h1>
-          <p className="text-xl text-white mb-8">Votre voix compte. Participez au changement dès maintenant !</p>
+          <p className="text-xl text-white mb-3">Votre voix compte. Participez au changement dès maintenant !</p>
+          <div className="flex items-center justify-center space-x-1 mb-3">
+  
+  <p className="font-bold text-xl text-white">
+  1 vote = 150 FCFA =  1
+  </p>
+  <Heart className="w-4 h-4 text-red-500 fill-current" />
+</div>
+
           <Button
             onClick={scrollToFirstNominees}
             className="bg-[#FFD700] text-black hover:bg-[#FFC000] transition-all duration-300 text-lg px-8 py-3 rounded-full shadow-lg hover:shadow-xl"
@@ -244,7 +253,7 @@ export default function VotePage() {
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
-                  <p className="text-center font-bold text-sm text-black">{`"${nominee.name}"`}</p>
+                  <p className="text-center font-bold text-sm text-black">{`${nominee.name}`}</p>
                   <div className="flex items-center justify-center space-x-1">
   <Heart className="w-4 h-4 text-red-500 fill-current" />
   <p className="font-bold text-sm text-black">
