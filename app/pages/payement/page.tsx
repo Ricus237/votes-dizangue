@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,22 @@ function PaymentForm() {
   const [operator, setOperator] = useState<string>('');
   const [nominee, setNominee] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [step, setStep] = useState<'phone' | 'likes'>('phone');
+  const [selectedLikes, setSelectedLikes] = useState<number | null>(null);
 
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const likeOptions = [
+    { value: 1, label: '1 Like', amount: 155 },
+    { value: 2, label: '2 Likes', amount: 310 },
+    { value: 5, label: '5 Likes', amount: 775 },
+    { value: 10, label: '10 Likes', amount: 1550 },
+    { value: 20, label: '20 Likes', amount: 3100 },
+    { value: 30, label: '30 Likes', amount: 4650 },
+    { value: 50, label: '50 Likes', amount: 7750 },
+    { value: 100, label: '100 Likes', amount: 15500 }
+  ];
 
   useEffect(() => {
     const op = searchParams.get('operator');
@@ -29,21 +43,22 @@ function PaymentForm() {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess(false);
-    setIsProcessing(true);
-
     if (phoneNumber.length !== 9 || !/^\d+$/.test(phoneNumber)) {
       setError('Le numéro de téléphone doit contenir exactement 9 chiffres.');
-      setIsProcessing(false);
       return;
     }
+    setError('');
+    setStep('likes');
+  };
 
-    const amount = 155; // Montant à prélever
-    const service = operator === 'orange' ? 'ORANGE' : 'MTN'; // Service basé sur l'opérateur
-    const depositNumber = '699434038'; // Remplacez par le numéro de dépôt
+  const handleLikeSelection = async (likes: number, amount: number) => {
+    setSelectedLikes(likes);
+    setIsProcessing(true);
+
+    const service = operator === 'orange' ? 'ORANGE' : 'MTN';
+    const depositNumber = '699434038';
 
     try {
       const response = await fetch('/api/payments', {
@@ -58,6 +73,8 @@ function PaymentForm() {
 
       if (response.ok && data.success) {
         setSuccess(true);
+        // Redirect to the net page with the amount
+        router.push(`/net?amount=${amount}`);
       } else {
         setError(data.message || "La transaction a échoué. Veuillez réessayer.");
       }
@@ -74,27 +91,43 @@ function PaymentForm() {
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Paiement {operator === 'orange' ? 'Orange Money' : 'MTN Mobile Money'}</CardTitle>
-          <CardDescription>Entrez votre numéro de téléphone pour continuer</CardDescription>
+          <CardDescription>
+            {step === 'phone' ? "Entrez votre numéro de téléphone pour continuer" : "Choisissez le nombre de likes"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="phoneNumber">Numéro de téléphone</Label>
-                <Input 
-                  id="phoneNumber"
-                  placeholder="Entrez 9 chiffres"
-                  value={phoneNumber}
-                  maxLength={9}
-                  required
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
+          {step === 'phone' ? (
+            <form onSubmit={handlePhoneSubmit}>
+              <div className="grid w-full items-center gap-4">
+                <div className="flex flex-col space-y-1.5">
+                  <Label htmlFor="phoneNumber">Numéro de téléphone</Label>
+                  <Input 
+                    id="phoneNumber"
+                    placeholder="Entrez 9 chiffres"
+                    value={phoneNumber}
+                    maxLength={9}
+                    required
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
               </div>
+              <Button type="submit" className="mt-4">Continuer</Button>
+            </form>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {likeOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  onClick={() => handleLikeSelection(option.value, option.amount)}
+                  disabled={isProcessing}
+                  className="h-20 flex flex-col items-center justify-center"
+                >
+                  <span>{option.label}</span>
+                  <span className="text-sm">{option.amount} FCFA</span>
+                </Button>
+              ))}
             </div>
-            <Button type="submit" disabled={isProcessing}>
-              {isProcessing ? 'Traitement en cours...' : 'Valider'}
-            </Button>
-          </form>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col items-start">
           {error && <div className="text-red-500 flex items-center"><AlertCircle className="mr-2" />{error}</div>}

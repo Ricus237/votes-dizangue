@@ -148,8 +148,8 @@ export default function VotePage() {
     [
       { id: '36', name: "Minka'a Mbende", logo: '/t1.jpg', company: 'PAOLO CHAUSSURES' },
       { id: '37', name: '⁠EDOUNG HEN Honoré', logo: '/t2.jpg', company: 'AGRI-NICO' },
-      { id: '39', name: 'LOBGA Charmant', logo: '/t4.jpg', company: 'SGPC' },
-      { id: '38', name: 'Capi NYOM', logo: '/t3.jpg', company: 'SGPC' },
+      { id: '39', name: 'LOBGA Charmant', logo: '/t3.jpg', company: 'SGPC' },
+      { id: '38', name: 'Capi NYOM', logo: '/t4.jpg', company: 'SGPC' },
     ],
   ]
 
