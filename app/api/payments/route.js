@@ -39,7 +39,7 @@ export async function POST(req) {
       }
     if (response.isTransactionSuccess() && response.isOperationSuccess()) {
       // Récupérer le nombre actuel de likes pour le nominé
-      const { data, error: fetchError } = await supabase
+      const { data } = await supabase
         .from('votes')
         .select('likes')
         .eq('id', nominee)
