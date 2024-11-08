@@ -45,11 +45,6 @@ export async function POST(req) {
         .eq('id', nominee)
         .single();
 
-      if (fetchError) {
-        console.error('Erreur lors de la récupération des likes:', fetchError);
-        return new Response(JSON.stringify({ success: false, message: "Erreur lors de la récupération des données." }), { status: 500 });
-      }
-
       const newLikes = (data.likes || 0) + 1;
 
       // Mettre à jour la colonne 'likes' dans la table 'votes'
