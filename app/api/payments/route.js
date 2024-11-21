@@ -23,6 +23,7 @@ export async function POST(req) {
       service,
       payer: phoneNumber,
       nonce: Math.random().toString(36).substr(2, 9), // Génère un nonce
+      reference: nominee
     });
  // Enregistrer la transaction dans la table 'transactions'
       const { error: transactionError } = await supabase
