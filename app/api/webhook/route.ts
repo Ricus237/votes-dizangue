@@ -8,14 +8,17 @@ import { supabase } from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+// Initialisation de Stripe
 const stripe = new Stripe("sk_test_51Pn0ilLOisbgAxPdV0nmhbaSO6HEzZolhXxcM5oNE7hIr6i9jw1H4BYSsoWhAzOLlrXC3hWEP4WEU6O6yJpMIBCl00QeTxSf4i", {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: '2024-11-20.acacia',
 });
+
+// Secret du webhook
+const endpointSecret = "whsec_Fv4smSUC4RwyLt8LdWCUCAhZpHnRHLPi";
 
 export async function POST(req: Request) {
   const payload = await req.text();
   const sig = req.headers.get('stripe-signature');
-  const endpointSecret = "whsec_Fv4smSUC4RwyLt8LdWCUCAhZpHnRHLPi";
 
   let event: Stripe.Event;
 
@@ -23,7 +26,7 @@ export async function POST(req: Request) {
     // Vérification de la signature Stripe
     event = stripe.webhooks.constructEvent(payload, sig!, endpointSecret);
   } catch (err: any) {
-    console.error('⚠️ Erreur de vérification de la signature du webhook:', err.message);
+    console.error('⚠️ Webhook signature verification failed:', err.message);
     return NextResponse.json({ message: 'Webhook Error: Invalid signature' }, { status: 400 });
   }
 
@@ -31,14 +34,40 @@ export async function POST(req: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-
+        const userId = session.client_reference_id; // ID local de l'utilisateur
         const stripeCustomerId = session.customer as string;
 
-        // Récupérer les informations de l'abonnement depuis la session
+        // Vérifiez si l'utilisateur existe dans la base de données
+        const { data: user, error: userError } = await supabase
+          .from('CONTENT_CREATOR')
+          .select('stripe_customer_id')
+          .eq('id', userId)
+          .single();
+
+        if (userError || !user) {
+          console.error('Utilisateur introuvable:', userError);
+          throw new Error('Utilisateur introuvable ou problème lors de la vérification');
+        }
+
+        // Si l'ID Stripe est différent ou absent, mettez-le à jour
+        if (!user.stripe_customer_id || user.stripe_customer_id !== stripeCustomerId) {
+          const { error } = await supabase
+            .from('CONTENT_CREATOR')
+            .update({ stripe_customer_id: stripeCustomerId })
+            .eq('id', userId);
+
+          if (error) {
+            console.error('Erreur lors de la mise à jour de l\'ID client Stripe:', error);
+            throw new Error('Erreur lors de la mise à jour de l\'ID client Stripe');
+          }
+        }
+
+        // Déterminez le plan d'abonnement à partir des line items
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 });
         const priceId = lineItems.data[0]?.price?.id;
 
-        let plan = 'Free';
+        let plan = 'Free'; // Plan par défaut
+
         if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
           plan = 'TaTaKae';
         } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
@@ -46,39 +75,42 @@ export async function POST(req: Request) {
         } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
           plan = 'Konoha';
         }
-            // Vérifier si l'utilisateur existe
-  const { data: user, error: fetchError } = await supabase
-  .from('CONTENT_CREATOR')
-  .select('*')
-  .eq('stripe_customer_id', stripeCustomerId)
-  .single();
 
-if (fetchError || !user) {
-  console.error('Utilisateur introuvable pour stripe_customer_id:', stripeCustomerId);
-  throw new Error('Utilisateur introuvable');
-}
-        // Mise à jour de l'utilisateur dans la base de données
-        const { error } = await supabase
+        // Mettez à jour le plan d'abonnement dans la base de données
+        const { error: planError } = await supabase
           .from('CONTENT_CREATOR')
-          .update({ plan_mensuel: plan, stripe_customer_id: stripeCustomerId })
-          .eq('stripe_customer_id', stripeCustomerId);
+          .update({ plan_mensuel: plan })
+          .eq('id', userId);
 
-        if (error) {
-          console.error('Erreur lors de la mise à jour du plan utilisateur:', error);
-          throw new Error('Erreur lors de la mise à jour');
+        if (planError) {
+          console.error('Erreur lors de la mise à jour du plan utilisateur:', planError);
+          throw new Error('Erreur lors de la mise à jour du plan utilisateur');
         }
 
         console.log(`✅ Utilisateur mis à jour avec le plan ${plan}`);
         break;
       }
 
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        const stripeCustomerId = subscription.customer as string;
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const stripeCustomerId = invoice.customer as string;
 
-        const priceId = subscription.items.data[0]?.price?.id;
+        // Vérifiez si l'utilisateur existe dans la base de données
+        const { data: user, error: userError } = await supabase
+          .from('CONTENT_CREATOR')
+          .select('*')
+          .eq('stripe_customer_id', stripeCustomerId)
+          .single();
 
-        let plan = 'Free';
+        if (userError || !user) {
+          console.error('Utilisateur introuvable pour invoice.payment_succeeded:', userError);
+          throw new Error('Utilisateur introuvable pour invoice.payment_succeeded');
+        }
+
+        // Récupérer le plan actuel associé à la facture
+        const priceId = invoice.lines.data[0]?.price?.id; // Vérifiez la première ligne de la facture
+        let plan = user.plan_mensuel; // Conserver le plan actuel par défaut
+
         if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
           plan = 'TaTaKae';
         } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
@@ -87,54 +119,46 @@ if (fetchError || !user) {
           plan = 'Konoha';
         }
 
-        // Vérifier si l'utilisateur existe
-  const { data: user, error: fetchError } = await supabase
-  .from('CONTENT_CREATOR')
-  .select('*')
-  .eq('stripe_customer_id', stripeCustomerId)
-  .single();
+        // Mettez à jour le plan utilisateur uniquement si nécessaire
+        if (user.plan_mensuel !== plan) {
+          const { error } = await supabase
+            .from('CONTENT_CREATOR')
+            .update({ plan_mensuel: plan })
+            .eq('stripe_customer_id', stripeCustomerId);
 
-if (fetchError || !user) {
-  console.error('Utilisateur introuvable pour stripe_customer_id:', stripeCustomerId);
-  throw new Error('Utilisateur introuvable');
-}
+          if (error) {
+            console.error('Erreur lors de la mise à jour du plan utilisateur:', error);
+            throw new Error('Erreur lors de la mise à jour du plan utilisateur');
+          }
 
-// Mise à jour du plan utilisateur
-const { error } = await supabase
-  .from('CONTENT_CREATOR')
-  .update({ plan_mensuel: plan })
-  .eq('stripe_customer_id', stripeCustomerId);
+          console.log(`✅ Plan utilisateur mis à jour à ${plan}`);
+        }
 
-if (error) {
-  console.error('Erreur Supabase:', error.details || error.message);
-  throw new Error('Erreur lors de la mise à jour: ' + error.message);
-}
-
-console.log(`✅ Abonnement mis à jour avec le plan ${plan}`);
-break;
+        console.log(`✅ Paiement réussi pour l'utilisateur ${user.id} avec le plan ${plan}`);
+        break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const stripeCustomerId = subscription.customer as string;
 
-        // Réinitialisation au plan "Free"
+        // Réinitialisez le plan d'abonnement à "Free" en cas de résiliation
         const { error } = await supabase
           .from('CONTENT_CREATOR')
           .update({ plan_mensuel: 'Free' })
           .eq('stripe_customer_id', stripeCustomerId);
 
         if (error) {
-          console.error('Erreur lors de la résiliation:', error);
-          throw new Error('Erreur lors de la résiliation');
+          console.error('Erreur lors de la réinitialisation du plan utilisateur:', error);
+          throw new Error('Erreur lors de la réinitialisation du plan utilisateur');
         }
 
-        console.log('✅ Abonnement annulé, utilisateur passé au plan Free');
+        console.log(`✅ Plan utilisateur réinitialisé à "Free"`);
         break;
       }
 
       default:
-        console.log(`⚠️ Type d'événement non pris en charge: ${event.type}`);
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
