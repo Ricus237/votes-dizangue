@@ -1,112 +1,117 @@
-/* eslint-disable @next/next/no-img-element */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { supabase } from '@/lib/supabaseClient';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-
-// Configuration Stripe
-const stripe = new Stripe('sk_test_51Pn0ilLOisbgAxPdV0nmhbaSO6HEzZolhXxcM5oNE7hIr6i9jw1H4BYSsoWhAzOLlrXC3hWEP4WEU6O6yJpMIBCl00QeTxSf4i', {
-  apiVersion: '2024-11-20.acacia',
+const stripe = new Stripe("sk_test_51Pn0ilLOisbgAxPdV0nmhbaSO6HEzZolhXxcM5oNE7hIr6i9jw1H4BYSsoWhAzOLlrXC3hWEP4WEU6O6yJpMIBCl00QeTxSf4i", {
+  apiVersion: "2024-11-20.acacia",
 });
 
-// Fonction principale pour gérer les requêtes
-export async function POST(req: NextRequest) {
-  const sig = req.headers.get('stripe-signature')!;
+export async function POST(req: Request) {
+  const payload = await req.text();
+  const sig = req.headers.get('stripe-signature');
   const endpointSecret = "whsec_Fv4smSUC4RwyLt8LdWCUCAhZpHnRHLPi";
-  let event;
+
+  let event: Stripe.Event;
 
   try {
-    // Lire et vérifier le corps de la requête
-    const rawBody = await req.text();
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+    // Vérification de la signature Stripe
+    event = stripe.webhooks.constructEvent(payload, sig!, endpointSecret);
   } catch (err: any) {
-    console.error(`Erreur de Webhook : ${err.message}`);
-    return NextResponse.json({ error: `Webhook error: ${err.message}` }, { status: 400 });
+    console.error('⚠️ Erreur de vérification de la signature du webhook:', err.message);
+    return NextResponse.json({ message: 'Webhook Error: Invalid signature' }, { status: 400 });
   }
 
-  // Gérer les différents types d'événements Stripe
-  switch (event.type) {
-    case 'invoice.payment_failed': {
-      const failedInvoice = event.data.object as Stripe.Invoice;
-      const customerId = failedInvoice.customer as string;
-      await updatePlanToFree(customerId);
-      break;
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+
+        const stripeCustomerId = session.customer as string;
+
+        // Récupérer les informations de l'abonnement depuis la session
+        const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 });
+        const priceId = lineItems.data[0]?.price?.id;
+
+        let plan = 'Free';
+        if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
+          plan = 'TaTaKae';
+        } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
+          plan = 'Gold';
+        } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
+          plan = 'Konoha';
+        }
+
+        // Mise à jour de l'utilisateur dans la base de données
+        const { error } = await supabase
+          .from('CONTENT_CREATOR')
+          .update({ plan_mensuel: plan, stripe_customer_id: stripeCustomerId })
+          .eq('stripe_customer_id', stripeCustomerId);
+
+        if (error) {
+          console.error('Erreur lors de la mise à jour du plan utilisateur:', error);
+          throw new Error('Erreur lors de la mise à jour');
+        }
+
+        console.log(`✅ Utilisateur mis à jour avec le plan ${plan}`);
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const stripeCustomerId = subscription.customer as string;
+
+        const priceId = subscription.items.data[0]?.price?.id;
+
+        let plan = 'Free';
+        if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
+          plan = 'TaTaKae';
+        } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
+          plan = 'Gold';
+        } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
+          plan = 'Konoha';
+        }
+
+        // Mise à jour du plan utilisateur
+        const { error } = await supabase
+          .from('CONTENT_CREATOR')
+          .update({ plan_mensuel: plan })
+          .eq('stripe_customer_id', stripeCustomerId);
+
+        if (error) {
+          console.error('Erreur lors de la mise à jour de l\'abonnement:', error);
+          throw new Error('Erreur lors de la mise à jour');
+        }
+
+        console.log(`✅ Abonnement mis à jour avec le plan ${plan}`);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const stripeCustomerId = subscription.customer as string;
+
+        // Réinitialisation au plan "Free"
+        const { error } = await supabase
+          .from('CONTENT_CREATOR')
+          .update({ plan_mensuel: 'Free' })
+          .eq('stripe_customer_id', stripeCustomerId);
+
+        if (error) {
+          console.error('Erreur lors de la résiliation:', error);
+          throw new Error('Erreur lors de la résiliation');
+        }
+
+        console.log('✅ Abonnement annulé, utilisateur passé au plan Free');
+        break;
+      }
+
+      default:
+        console.log(`⚠️ Type d'événement non pris en charge: ${event.type}`);
     }
 
-    case 'customer.subscription.deleted': {
-      const deletedSubscription = event.data.object as Stripe.Subscription;
-      const customerId = deletedSubscription.customer as string;
-      await updatePlanToFree(customerId);
-      break;
-    }
-
-    case 'invoice.payment_succeeded': {
-      const succeededInvoice = event.data.object as Stripe.Invoice;
-      const customerId = succeededInvoice.customer as string;
-      const subscriptionId = succeededInvoice.subscription as string;
-      await updatePlanToPremium(customerId, subscriptionId);
-      break;
-    }
-
-    default:
-      console.log(`Unhandled event type: ${event.type}`);
-  }
-
-  return NextResponse.json({ received: true });
-}
-
-// Mise à jour du plan au "Free" en cas de paiement échoué ou d'annulation
-async function updatePlanToFree(customerId: string) {
-  const { data, error } = await supabase
-    .from('CONTENT_CREATOR')
-    .select('id')
-    .eq('stripe_session->>customer', customerId)
-    .single();
-
-  if (error) {
-    console.error('Erreur Supabase:', error);
-    return;
-  }
-
-  if (data) {
-    const { id } = data;
-    const { error: updateError } = await supabase
-      .from('CONTENT_CREATOR')
-      .update({ plan_mensuel: 'Free' })
-      .eq('id', id);
-
-    if (updateError) {
-      console.error('Erreur lors de la mise à jour du plan:', updateError);
-    }
-  }
-}
-
-// Mise à jour du plan au "Premium" après paiement réussi
-async function updatePlanToPremium(customerId: string, subscriptionId: string) {
-  const { data, error } = await supabase
-    .from('CONTENT_CREATOR')
-    .select('id')
-    .eq('stripe_session->>customer', customerId)
-    .single();
-
-  if (error) {
-    console.error('Erreur Supabase:', error);
-    return;
-  }
-
-  if (data) {
-    const { id } = data;
-    const { error: updateError } = await supabase
-      .from('CONTENT_CREATOR')
-      .update({ plan_mensuel: 'Premium', stripe_session: { subscription: subscriptionId } })
-      .eq('id', id);
-
-    if (updateError) {
-      console.error('Erreur lors de la mise à jour du plan:', updateError);
-    }
+    return NextResponse.json({ received: true });
+  } catch (err: any) {
+    console.error('Erreur lors du traitement de l\'événement:', err.message);
+    return NextResponse.json({ message: err.message }, { status: 500 });
   }
 }
