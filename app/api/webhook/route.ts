@@ -1,3 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { supabase } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -11,7 +16,7 @@ const stripe = new Stripe('sk_test_51Pn0ilLOisbgAxPdV0nmhbaSO6HEzZolhXxcM5oNE7hI
 // Fonction principale pour gérer les requêtes
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature')!;
-  const endpointSecret = "whsec_69802bb5ed681dda6a3fcc29830ebc37755ef76b2cc78255ad211de996d41ecd";
+  const endpointSecret = "whsec_Fv4smSUC4RwyLt8LdWCUCAhZpHnRHLPi";
   let event;
 
   try {
