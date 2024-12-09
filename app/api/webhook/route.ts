@@ -4,14 +4,14 @@ import Stripe from 'stripe';
 
 
 // Configuration Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+const stripe = new Stripe('sk_test_51Pn0ilLOisbgAxPdV0nmhbaSO6HEzZolhXxcM5oNE7hIr6i9jw1H4BYSsoWhAzOLlrXC3hWEP4WEU6O6yJpMIBCl00QeTxSf4i', {
+  apiVersion: '2024-11-20.acacia',
 });
 
 // Fonction principale pour gérer les requêtes
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature')!;
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+  const endpointSecret = "whsec_69802bb5ed681dda6a3fcc29830ebc37755ef76b2cc78255ad211de996d41ecd";
   let event;
 
   try {
