@@ -46,7 +46,17 @@ export async function POST(req: Request) {
         } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
           plan = 'Konoha';
         }
+            // Vérifier si l'utilisateur existe
+  const { data: user, error: fetchError } = await supabase
+  .from('CONTENT_CREATOR')
+  .select('*')
+  .eq('stripe_customer_id', stripeCustomerId)
+  .single();
 
+if (fetchError || !user) {
+  console.error('Utilisateur introuvable pour stripe_customer_id:', stripeCustomerId);
+  throw new Error('Utilisateur introuvable');
+}
         // Mise à jour de l'utilisateur dans la base de données
         const { error } = await supabase
           .from('CONTENT_CREATOR')
@@ -77,19 +87,31 @@ export async function POST(req: Request) {
           plan = 'Konoha';
         }
 
-        // Mise à jour du plan utilisateur
-        const { error } = await supabase
-          .from('CONTENT_CREATOR')
-          .update({ plan_mensuel: plan })
-          .eq('stripe_customer_id', stripeCustomerId);
+        // Vérifier si l'utilisateur existe
+  const { data: user, error: fetchError } = await supabase
+  .from('CONTENT_CREATOR')
+  .select('*')
+  .eq('stripe_customer_id', stripeCustomerId)
+  .single();
 
-        if (error) {
-          console.error('Erreur lors de la mise à jour de l\'abonnement:', error);
-          throw new Error('Erreur lors de la mise à jour');
-        }
+if (fetchError || !user) {
+  console.error('Utilisateur introuvable pour stripe_customer_id:', stripeCustomerId);
+  throw new Error('Utilisateur introuvable');
+}
 
-        console.log(`✅ Abonnement mis à jour avec le plan ${plan}`);
-        break;
+// Mise à jour du plan utilisateur
+const { error } = await supabase
+  .from('CONTENT_CREATOR')
+  .update({ plan_mensuel: plan })
+  .eq('stripe_customer_id', stripeCustomerId);
+
+if (error) {
+  console.error('Erreur Supabase:', error.details || error.message);
+  throw new Error('Erreur lors de la mise à jour: ' + error.message);
+}
+
+console.log(`✅ Abonnement mis à jour avec le plan ${plan}`);
+break;
       }
 
       case 'customer.subscription.deleted': {
