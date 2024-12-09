@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         const { data: user, error: userError } = await supabase
           .from('CONTENT_CREATOR')
           .select('stripe_customer_id')
-          .eq('id', userId)
+          .eq('id', "41080a91-8e8b-4cc2-9004-64d88505ef02")
           .single();
 
         if (userError || !user) {
