@@ -64,15 +64,15 @@ export async function POST(req: Request) {
 
         // Déterminez le plan d'abonnement à partir des line items
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 });
-        const priceId = lineItems.data[0]?.price?.id;
+        const amount_total = lineItems.data[0].amount_total;
 
         let plan = 'Free'; // Plan par défaut
 
-        if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
+        if (amount_total === 9900) {
           plan = 'TaTaKae';
-        } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
+        } else if (amount_total ===  24900) {
           plan = 'Gold';
-        } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
+        } else if (amount_total === 1900) {
           plan = 'Konoha';
         }
 
@@ -108,17 +108,18 @@ export async function POST(req: Request) {
         }
 
         // Récupérer le plan actuel associé à la facture
-        const priceId = invoice.lines.data[0]?.price?.id; // Vérifiez la première ligne de la facture
         let plan = user.plan_mensuel; // Conserver le plan actuel par défaut
 
-        if (priceId === 'price_1Q6B8WLOisbgAxPdmARF5rcA') {
+        const amount_total = invoice.lines.data[0].amount;
+
+
+        if (amount_total === 9900) {
           plan = 'TaTaKae';
-        } else if (priceId ===  'price_1Q6B9PLOisbgAxPduQ90xac0') {
+        } else if (amount_total ===  24900) {
           plan = 'Gold';
-        } else if (priceId === 'price_1Q6B7oLOisbgAxPdlUDgYM5R') {
+        } else if (amount_total === 1900) {
           plan = 'Konoha';
         }
-
         // Mettez à jour le plan utilisateur uniquement si nécessaire
         if (user.plan_mensuel !== plan) {
           const { error } = await supabase
